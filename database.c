@@ -1,27 +1,33 @@
 #include <string.h>
-#include "LinkedList.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 typedef char ETYPE[32];
+
 typedef struct CSG *CSGTUPLE;
 struct CSG
 {
-    int studentID;
+    char* studentID;
     char* course;
     char* grade;
-    CSGTUPLE next;
+    CSGTUPLE nextID;
+    CSGTUPLE nextCourse;
+    CSGTUPLE nextGrade;
 };
-typedef CSGTUPLE CSGTABLE[1009];
+typedef CSGTUPLE IDTABLE[1009];
+typedef CSGTUPLE COURSETABLE[1009];
+typedef CSGTUPLE GRADETABLE[1009];
 
-CSGTUPLE new_CSGTUPLE(int ID, char course[5], char grade[2])
+CSGTUPLE new_CSGTUPLE(char ID[5], char course[5], char grade[2])
 {
     CSGTUPLE newTuple = (CSGTUPLE) malloc(sizeof(CSGTUPLE));
 
     newTuple->studentID = ID;
     newTuple->course = course;
     newTuple->grade = grade;
-    newTuple->next = NULL;
+    newTuple->nextID = NULL;
+    newTuple->nextCourse = NULL;
+    newTuple->nextGrade = NULL;
 
     return newTuple;
 }
@@ -37,18 +43,18 @@ struct SNAP
 };
 typedef SNAPTUPLE SNAPTABLE[1009];
 
-// int h(ETYPE x)
-// {
-//     int i, sum;
-//     sum = 0;
-//     for (i = 0; x[i] != '\0'; i++) { sum += x[i]; }
-//     return sum % 1009;
-// }
-
-int hash(int x)
+int h(ETYPE x)
 {
-    return x % 1009;
+    int i, sum;
+    sum = 0;
+    for (i = 0; x[i] != '\0'; i++) { sum += x[i]; }
+    return sum % 1009;
 }
+
+// int hash(int x)
+// {
+//     return x % 1009;
+// }
 
 // void bucketInsert(ETYPE x, CSGTUPLE *pL)
 // {
@@ -64,29 +70,72 @@ int hash(int x)
 //     }
 // }
 
-void CSGInsert(CSGTUPLE tuple, CSGTABLE table)
+void CSGInsert(CSGTUPLE tuple, IDTABLE IDTable, COURSETABLE courseTable, GRADETABLE gradeTable)
 {
-    int xHash = hash(tuple->studentID);
-    printf("inserting student: %d\n", tuple->studentID);
+    int IDhash = h(tuple->studentID);
+    int courseHash = h(tuple->course);
+    printf("inserting student: %s\n", tuple->studentID);
 
-    if(table[xHash] == NULL)
+    if(IDTable[IDhash] == NULL)
     {
-        table[xHash] = tuple;
+        IDTable[IDhash] = tuple;
     }
     else
     {
-        printf("table entry was full for student: %d\n", tuple->studentID);
-        CSGTUPLE curr = table[xHash];
-        printf("current entry: %d\n", curr->studentID);
+        printf("table entry was full for student: %s\n", tuple->studentID);
+        CSGTUPLE curr = IDTable[IDhash];
+        printf("current entry: %s\n", curr->studentID);
         while(curr != NULL)
         {
-            curr = curr->next;
+            curr = curr->nextID;
             if(curr == NULL) { printf("curr is NULL\n"); }
-            else { printf("current entry: %d\n", curr->studentID); }
+            else { printf("current entry: %s\n", curr->studentID); }
+        }
+        curr = tuple;
+    }
+
+    if(courseTable[courseHash] == NULL)
+    {
+        courseTable[courseHash] = IDTable[IDhash];
+    }
+    else
+    {
+        printf("table entry was full for student: %s\n", tuple->studentID);
+        CSGTUPLE curr = courseTable[courseHash];
+        printf("current entry: %s\n", curr->studentID);
+        while(curr != NULL)
+        {
+            curr = curr->nextID;
+            if(curr == NULL) { printf("curr is NULL\n"); }
+            else { printf("current entry: %s\n", curr->studentID); }
         }
         curr = tuple;
     }
 }
+
+// void CSGInsert(CSGTUPLE tuple, IDTABLE IDTable, COURSETABLE courseTable, GRADETABLE gradeTable)
+// {
+//     int IDhash = h(tuple->studentID);
+//     printf("inserting student: %s\n", tuple->studentID);
+
+//     if(IDTable[IDhash] == NULL)
+//     {
+//         IDTable[IDhash] = tuple;
+//     }
+//     else
+//     {
+//         printf("table entry was full for student: %s\n", tuple->studentID);
+//         CSGTUPLE curr = IDTable[IDhash];
+//         printf("current entry: %s\n", curr->studentID);
+//         while(curr != NULL)
+//         {
+//             curr = curr->nextID;
+//             if(curr == NULL) { printf("curr is NULL\n"); }
+//             else { printf("current entry: %s\n", curr->studentID); }
+//         }
+//         curr = tuple;
+//     }
+// }
 
 // void insert(ETYPE x, CSGTABLE H)
 // {
@@ -106,15 +155,18 @@ void CSGInsert(CSGTUPLE tuple, CSGTABLE table)
 
 int main(int argc, char* argv[])
 {
-    CSGTABLE testTable;
-    CSGTUPLE testTuple = new_CSGTUPLE(919, "GB101", "A+");
-    CSGTUPLE testTuple2 = new_CSGTUPLE(1928, "GB102", "A-");
+    IDTABLE idTable;
+    COURSETABLE courseTable;
+    GRADETABLE gradeTable;
+
+    CSGTUPLE testTuple = new_CSGTUPLE("919", "GB101", "A+");
+    CSGTUPLE testTuple2 = new_CSGTUPLE("1928", "GB102", "A-");
 
     //printf("%d", hash(19));
 
-    CSGInsert(testTuple, testTable);
-    printf("%d\n", testTable[hash(919)]->studentID);
-    CSGInsert(testTuple2, testTable);
+    CSGInsert(testTuple, idTable, courseTable, gradeTable);
+    //printf("%d\n", testTable[hash(919)]->studentID);
+    CSGInsert(testTuple2, idTable, courseTable, gradeTable);
     printf("done");
     //printf("%d\n", testTable[hash(1928)]->studentID);
 }
