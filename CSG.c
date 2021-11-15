@@ -3,31 +3,29 @@
 #include <stdlib.h>
 #include "CSG.h"
 
+int CSGcounter = 0;
+
 struct CSG
 {
     char* studentID;
     char* course;
     char* grade;
-    CSGTUPLE nextID;
-    CSGTUPLE nextCourse;
-    CSGTUPLE nextGrade;
+    CSGTUPLE next;
 };
 
-CSGTUPLE new_CSGTUPLE(char ID[5], char course[5], char grade[2])
+CSGTUPLE new_CSGTUPLE(char course[5], char ID[5], char grade[2])
 {
-    CSGTUPLE newTuple = (CSGTUPLE) malloc(sizeof(CSGTUPLE));
+    CSGTUPLE newTuple = (CSGTUPLE) malloc(sizeof(struct CSG));
 
     newTuple->studentID = ID;
     newTuple->course = course;
     newTuple->grade = grade;
-    newTuple->nextID = NULL;
-    newTuple->nextCourse = NULL;
-    newTuple->nextGrade = NULL;
+    newTuple->next = NULL;
 
     return newTuple;
 }
 
-int h(ETYPE x)
+int CSGh(char x[32])
 {
     int i, sum;
     sum = 0;
@@ -35,79 +33,213 @@ int h(ETYPE x)
     return sum % 1009;
 }
 
-void CSGInsert(CSGTUPLE tuple, IDTABLE IDTable, COURSETABLE courseTable, GRADETABLE gradeTable)
+void CSGInsert(CSGTUPLE tuple, CSGTABLE table)
 {
-    int IDhash = h(tuple->studentID);
-    int courseHash = h(tuple->course);
-    printf("inserting student: %s\n", tuple->studentID);
+    int hash = CSGh(tuple->studentID);
+    // printf("inserting student: ");
+    // printCSGInfo(tuple);
+    // printf("\n");
 
-    if(IDTable[IDhash] == NULL)
+    if(table[hash] == NULL)
     {
-        IDTable[IDhash] = tuple;
+        table[hash] = tuple;
     }
     else
     {
-        printf("table entry was full for student: %s\n", tuple->studentID);
-        CSGTUPLE curr = IDTable[IDhash];
-        printf("current entry: %s\n", curr->studentID);
-        while(curr != NULL)
-        {
-            curr = curr->nextID;
-            if(curr == NULL) { printf("curr is NULL\n"); }
-            else { printf("current entry: %s\n", curr->studentID); }
-        }
-        curr = tuple;
-    }
+        int bool = 0;
+        CSGTUPLE curr = table[hash];
 
-    if(courseTable[courseHash] == NULL)
+        if(strcmp(tuple->course, curr->course) == 0 && strcmp(tuple->studentID, curr->studentID) == 0 && strcmp(tuple->grade, curr->grade) == 0)
+        {
+            bool = 1;
+        }
+        while(curr->next != NULL)
+        {
+            if(strcmp(tuple->course, curr->course) == 0 && strcmp(tuple->studentID, curr->studentID) == 0 && strcmp(tuple->grade, curr->grade) == 0)
+            {
+                bool = 1;
+            }
+            curr = curr->next;
+        }
+        if(bool == 0) { curr->next = tuple; }
+    }
+    // printf("successfully added student: ");
+    // printCSGInfo(tuple);
+    // printf("\n");
+}
+
+void CSGDelete(CSGTUPLE tuple, CSGTABLE table)
+{
+    if(strcmp(tuple->studentID, "*") == 0)
     {
-        courseTable[courseHash] = IDTable[IDhash];
+        for(int i = 0; i < 1009; i++)
+        {
+            CSGdelete(tuple, table, i);
+        }
     }
     else
     {
-        printf("table entry was full for student: %s\n", tuple->studentID);
-        CSGTUPLE curr = courseTable[courseHash];
-        printf("current entry: %s\n", curr->studentID);
+        int hash = CSGh(tuple->studentID);
+        CSGdelete(tuple, table, hash);
+    }
+    //printf("finished deletion.\n");
+}
+
+void CSGdelete(CSGTUPLE tuple, CSGTABLE table, int hash)
+{
+    if(table[hash] != NULL)
+    {
+        CSGTUPLE before = NULL;
+        CSGTUPLE curr = table[hash];
         while(curr != NULL)
         {
-            curr = curr->nextID;
-            if(curr == NULL) { printf("curr is NULL\n"); }
-            else { printf("current entry: %s\n", curr->studentID); }
+            if((strcmp(tuple->course, curr->course) == 0 || strcmp(tuple->course, "*") == 0) && (strcmp(tuple->studentID, curr->studentID) == 0 || 
+            strcmp(tuple->studentID, "*") == 0) && (strcmp(tuple->grade, curr->grade) == 0 || strcmp(tuple->grade, "*") == 0))
+            {
+                if(before == NULL)
+                {
+                    table[hash] = curr->next;
+                    //CSGTUPLE temp = curr;
+                    curr = curr->next;
+                    //free(temp);
+                }
+                else
+                {
+                    before->next = curr->next;
+
+                    //CSGTUPLE temp = curr;
+                    curr = curr->next;
+                    //free(temp);
+                }
+            }
+            else
+            {
+                before = curr;
+                //CSGTUPLE temp = curr;
+                curr = curr->next;
+                //free(temp);
+            }
         }
-        curr = tuple;
     }
 }
 
-void testInsert(CSGTUPLE tuple, IDTABLE IDTable)
+void CSGLookup(CSGTUPLE tuple, CSGTABLE table, CSGTUPLE set[1009])
 {
-    int IDhash = h(tuple->studentID);
-    printf("inserting student: %s\n", tuple->studentID);
-
-    if(IDTable[IDhash]->nextID == NULL)
+    CSGcounter = 0;
+    if(strcmp(tuple->studentID, "*") == 0)
     {
-        IDTable[IDhash]->nextID = tuple;
+        for(int i = 0; i < 1009; i++)
+        {
+            CSGlookup(tuple, table, i, set);
+        }
     }
     else
     {
-        printf("table entry was full for student: %s\n", tuple->studentID);
-        CSGTUPLE curr = IDTable[IDhash];
-        printf("current entry: %s\n", curr->studentID);
+        int hash = CSGh(tuple->studentID);
+        CSGlookup(tuple, table, hash, set);
+    }
+    //printf("finished lookup.\n");
+}
+
+void CSGlookup(CSGTUPLE tuple, CSGTABLE table, int hash, CSGTUPLE set[1009])
+{
+    if(table[hash] != NULL)
+    {
+        CSGTUPLE curr = table[hash];
         while(curr != NULL)
         {
-            curr = curr->nextID;
-            if(curr == NULL) { printf("curr is NULL\n"); }
-            else { printf("current entry: %s\n", curr->studentID); }
+            if((strcmp(tuple->course, curr->course) == 0 || strcmp(tuple->course, "*") == 0) && (strcmp(tuple->studentID, curr->studentID) == 0 || strcmp(tuple->studentID, "*") == 0) && (strcmp(tuple->grade, curr->grade) == 0 || strcmp(tuple->grade, "*") == 0))
+            {
+                set[CSGcounter] = curr;
+                CSGcounter++;
+                curr = curr->next;
+            }
+            else
+            {
+                //CSGTUPLE temp = curr;
+                curr = curr->next;
+                //free(temp);
+            }
         }
-        curr = tuple;
     }
 }
 
-void printInfo(IDTABLE table)
+void printCSGInfo(CSGTUPLE tuple)
 {
-    printf("id: %s, course: %s, grade: %s\n", table[h("919")]->nextID->studentID, table[h("919")]->nextID->course, table[h("919")]->nextID->grade);
+    if(tuple != NULL) { printf("course: %s, id: %s, grade: %s", tuple->course, tuple->studentID, tuple->grade); }
+    else { printf("tuple is null"); }
 }
 
-void printInfo2(IDTABLE table)
+void printCSGTable(CSGTABLE table)
 {
-    printf("id: %s, course: %s, grade: %s\n", table[h("1928")]->studentID, table[h("919")]->course, table[h("919")]->grade);
+    for(int i = 0; i < 1009; i++)
+    {
+        if(table[i] != NULL)
+        {            
+            CSGTUPLE curr = table[i];
+            while(curr != NULL)
+            {
+                printCSGInfo(curr);
+                curr = curr->next;
+                printf("  ->  ");
+            }
+            printf("\n");
+        }
+    }
+}
+
+void printCSGLookup(CSGTUPLE set[1009])
+{
+    int bool = 0;
+    for(int i = 0; i < 1009; i++)
+    {
+        if(set[i] != NULL)
+        {            
+            printCSGInfo(set[i]);
+            printf("\n");
+            bool = 1;
+        }
+    }
+    if(bool == 0)
+    {
+        printf("could not find matching tuple in set.\n");
+    }
+}
+
+char* gradeFinder(CSGTABLE table, char id[5], char course[5])
+{
+    if(table[CSGh(id)] != NULL)
+    {
+        CSGTUPLE curr = table[CSGh(id)];
+        while(curr != NULL)
+        {
+            if(strcmp(curr->course, course) == 0 && strcmp(curr->studentID, id) == 0)
+            {
+                return curr->grade;
+            }
+            else
+            {
+                curr = curr->next;
+            }
+        }
+    }
+    return NULL;
+}
+
+char* CSGcourseFinder(CSGTABLE table, CDHTABLE CDHtable, CRTABLE CRtable, char hour[4], char day[2], char id[5])
+{
+    char* courseList[50];
+    int counter = 0;
+    if(table[CSGh(id)] != NULL)
+    {
+        CSGTUPLE curr = table[CSGh(id)];
+        while(curr != NULL)
+        {
+            courseList[counter] = curr->course;
+            counter++;
+            curr = curr->next;
+        }
+        return CDHcourseFinder(CDHtable, CRtable, courseList, hour, day);
+    }
+    return NULL;
 }
