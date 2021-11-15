@@ -170,7 +170,7 @@ int main(int argc, char* argv[])
     char* whereDay = "Tu";
 
     printf("starting up grade finder...\n");
-
+    // HERE IS WHERE WE HAVE THE SCANNER ISSUES...the second scanf is how we are supposed to read a string with a space
     // printf("Enter a course: ");
     // scanf("%s", course);
 
