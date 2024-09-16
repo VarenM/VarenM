@@ -1,6 +1,6 @@
 - 👋 Hi, I’m @VarenM
 - 👀 I’m interested in computer science and music (I play guitar), especially anything with AI or ML music/sound generation
-- 🌱 I’m a senior in college
+- 🌱 I’m a first year master's student
 - 💞️ I’m looking to collaborate on anything!
 - 📫 How to reach me: varenman@gmail.com
 - check out this cool website completed with the Google Developers Students Club: https://ur-gdsc-music.github.io/
